@@ -1,5 +1,5 @@
 import { useContext, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
 import { login } from '../services/authService'
 
@@ -63,6 +63,9 @@ const Login = () => {
             </label>
             {error && <p className="error-text">{error}</p>}
             <button type="submit">Sign In</button>
+            <p className="small-copy" style={{ marginTop: 16, textAlign: 'center' }}>
+              Don't have an account? <Link to="/register" style={{ fontWeight: 600, textDecoration: 'underline' }}>Register here</Link>
+            </p>
           </form>
         </div>
       </div>

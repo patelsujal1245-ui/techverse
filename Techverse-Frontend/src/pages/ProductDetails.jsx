@@ -4,6 +4,7 @@ import ProductCard from '../components/ProductCard'
 import { ShopContext } from '../context/ShopContext'
 import { fallbackProducts, normalizeProduct, placeholderImage, safePrice } from '../data/catalog'
 import { fetchProduct, fetchProducts } from '../services/productService'
+import { FiHeart, FiShoppingCart, FiArrowLeft } from 'react-icons/fi'
 
 const ProductDetails = () => {
   const { id } = useParams()
@@ -61,18 +62,19 @@ const ProductDetails = () => {
         <div className="product-detail-content">
           <span className="chip">{product.category}</span>
           <h1>{product.name}</h1>
-          <p className="muted">{product.brand}</p>
-          <p>{product.description}</p>
+          <p className="brand-text">{product.brand}</p>
+          <p className="description">{product.description}</p>
           <div className="price-row">
             <strong>{safePrice(product.price)}</strong>
             {product.oldPrice ? <span>{safePrice(product.oldPrice)}</span> : null}
           </div>
-          <p>Stock left: {product.stock}</p>
+          <p className="stock-indicator">Stock left: {product.stock}</p>
           <div className="card-actions">
-            <button type="button" onClick={() => addToCart(product)}>
-              Add to cart
+            <button type="button" onClick={() => addToCart(product)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+              <FiShoppingCart /> Add to cart
             </button>
-            <button type="button" className="secondary" onClick={() => toggleWishlist(product)}>
+            <button type="button" className="secondary" onClick={() => toggleWishlist(product)} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+              <FiHeart style={inWishlist ? { fill: '#ef4444', color: '#ef4444' } : {}} />
               {inWishlist ? 'Saved to wishlist' : 'Add to wishlist'}
             </button>
           </div>
@@ -106,7 +108,7 @@ const ProductDetails = () => {
       </div>
       <div className="spaced-top">
         <Link to="/shop" className="text-link">
-          Back to shop
+          <FiArrowLeft /> Back to shop
         </Link>
       </div>
     </section>
@@ -114,3 +116,4 @@ const ProductDetails = () => {
 }
 
 export default ProductDetails
+

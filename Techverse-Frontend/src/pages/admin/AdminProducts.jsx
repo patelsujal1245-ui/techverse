@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchCategories, fetchProducts, createProduct, updateProduct, deleteProduct } from '../../services/productService'
 import { normalizeProduct, placeholderImage, safePrice } from '../../data/catalog'
+import { FiEdit, FiTrash2, FiArrowLeft, FiUploadCloud } from 'react-icons/fi'
+import api from '../../services/api'
 
 const emptyForm = {
   name: '',
@@ -20,6 +22,9 @@ const AdminProducts = () => {
   const [form, setForm] = useState(emptyForm)
   const [editingId, setEditingId] = useState('')
   const [message, setMessage] = useState('')
+  
+  const [uploading, setUploading] = useState(false)
+  const [dragOver, setDragOver] = useState(false)
 
   const loadData = async () => {
     try {
@@ -48,6 +53,56 @@ const AdminProducts = () => {
   useEffect(() => {
     loadData()
   }, [])
+
+  const handleFileUpload = async (file) => {
+    if (!file) return
+    setUploading(true)
+    setMessage('')
+
+    const formData = new FormData()
+    formData.append('image', file)
+
+    try {
+      const { data } = await api.post('/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+      
+      setForm((prev) => ({
+        ...prev,
+        images: prev.images ? `${prev.images}\n${data.url}` : data.url,
+      }))
+      setMessage('Image uploaded successfully.')
+    } catch (err) {
+      setMessage(err.response?.data?.message || 'Image upload failed. Make sure server is running.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const onDragOver = (e) => {
+    e.preventDefault()
+    setDragOver(true)
+  }
+
+  const onDragLeave = () => {
+    setDragOver(false)
+  }
+
+  const onDrop = (e) => {
+    e.preventDefault()
+    setDragOver(false)
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileUpload(e.dataTransfer.files[0])
+    }
+  }
+
+  const onFileSelect = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      handleFileUpload(e.target.files[0])
+    }
+  }
 
   const submitHandler = async (event) => {
     event.preventDefault()
@@ -99,11 +154,13 @@ const AdminProducts = () => {
         <p>Manage products for the TechVerse catalog. Add, edit, or remove items from the live store.</p>
       </div>
       <p className="field-note">
-        Enter local image paths from <code>/public/products</code>, one per line. Example: <code>/products/phone.svg</code>
+        Upload files using the drag-and-drop zone or enter image paths manually, one per line.
       </p>
-      <Link to="/admin/dashboard" className="text-link">
-        Back to dashboard
-      </Link>
+      <div style={{ marginBottom: 24 }}>
+        <Link to="/admin/dashboard" className="text-link">
+          <FiArrowLeft /> Back to dashboard
+        </Link>
+      </div>
       {message ? <p className="success-text">{message}</p> : null}
 
       <form className="admin-form" onSubmit={submitHandler}>
@@ -142,12 +199,69 @@ const AdminProducts = () => {
           onChange={(e) => setForm({ ...form, description: e.target.value })}
           required
         />
+        
+        <div
+          className={`upload-dropzone ${dragOver ? 'dragover' : ''}`}
+          onDragOver={onDragOver}
+          onDragLeave={onDragLeave}
+          onDrop={onDrop}
+          onClick={() => document.getElementById('file-upload-input').click()}
+        >
+          <FiUploadCloud className="upload-dropzone-icon" />
+          <p>{uploading ? 'Uploading image...' : 'Drag & drop product image here, or click to browse'}</p>
+          <span>Supports JPEG, PNG, WEBP, SVG (Max 5MB)</span>
+          <input
+            id="file-upload-input"
+            type="file"
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={onFileSelect}
+          />
+        </div>
+
+        {form.images ? (
+          <div className="upload-preview-container">
+            {form.images.split('\n').filter(Boolean).map((img, idx) => {
+              const VITE_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+              const BACKEND_URL = VITE_API_URL.replace(/\/api\/?$/, '')
+              const resolvedImg = img.startsWith('/uploads') ? `${BACKEND_URL}${img}` : img
+
+              return (
+                <div key={idx} className="upload-preview-item" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <img
+                    src={resolvedImg}
+                    alt="Preview"
+                    className="upload-preview"
+                    onError={(e) => { e.target.src = placeholderImage }}
+                  />
+                  <div className="upload-preview-info">
+                    <span>{img.split('/').pop()}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newImages = form.images
+                          .split('\n')
+                          .filter((_, i) => i !== idx)
+                          .join('\n')
+                        setForm({ ...form, images: newImages })
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        ) : null}
+
         <textarea
-          placeholder="Image paths from /public/products, one per line"
-          rows="4"
+          placeholder="Image paths from /public/products or uploaded URLs, one per line"
+          rows="3"
           value={form.images}
           onChange={(e) => setForm({ ...form, images: e.target.value })}
         />
+
         <button type="submit">{editingId ? 'Update Product' : 'Create Product'}</button>
         {editingId ? (
           <button type="button" className="secondary" onClick={() => { setEditingId(''); setForm(emptyForm) }}>
@@ -172,8 +286,8 @@ const AdminProducts = () => {
               <p>{safePrice(product.price)}</p>
             </div>
             <div className="card-actions">
-              <button type="button" onClick={() => startEdit(product)}>
-                Edit
+              <button type="button" onClick={() => startEdit(product)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <FiEdit /> Edit
               </button>
               <button
                 type="button"
@@ -184,8 +298,9 @@ const AdminProducts = () => {
                   await deleteProduct(product._id)
                   loadData()
                 }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}
               >
-                Delete
+                <FiTrash2 /> Delete
               </button>
             </div>
           </article>
@@ -196,3 +311,5 @@ const AdminProducts = () => {
 }
 
 export default AdminProducts
+
+

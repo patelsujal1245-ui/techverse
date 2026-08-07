@@ -179,9 +179,21 @@ export const fallbackProducts = [
   },
 ]
 
-export const normalizeProduct = (product) => ({
-  ...product,
-  images: product.images?.length ? product.images : [placeholderImage],
-})
+const VITE_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+const BACKEND_URL = VITE_API_URL.replace(/\/api\/?$/, '')
+
+export const normalizeProduct = (product) => {
+  const images = (product.images || []).map((img) => {
+    if (img && img.startsWith('/uploads')) {
+      return `${BACKEND_URL}${img}`
+    }
+    return img
+  })
+  return {
+    ...product,
+    images: images.length ? images : [placeholderImage],
+  }
+}
 
 export const safePrice = (value) => currency.format(Number(value || 0))
+

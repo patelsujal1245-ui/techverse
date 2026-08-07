@@ -1,5 +1,5 @@
 import { useContext, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { AuthContext } from '../context/AuthContext'
 import { register } from '../services/authService'
 
@@ -78,6 +78,9 @@ const Register = () => {
             </label>
             {error && <p className="error-text">{error}</p>}
             <button type="submit">Create Account</button>
+            <p className="small-copy" style={{ marginTop: 16, textAlign: 'center' }}>
+              Already have an account? <Link to="/login" style={{ fontWeight: 600, textDecoration: 'underline' }}>Login here</Link>
+            </p>
           </form>
         </div>
       </div>

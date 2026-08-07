@@ -4,6 +4,7 @@ import { AuthContext } from '../context/AuthContext'
 import { ShopContext } from '../context/ShopContext'
 import { createOrder } from '../services/orderService'
 import { placeholderImage, safePrice } from '../data/catalog'
+import { FiPlus, FiMinus, FiTrash2 } from 'react-icons/fi'
 
 const Cart = () => {
   const navigate = useNavigate()
@@ -49,11 +50,13 @@ const Cart = () => {
   if (!cart.length) {
     return (
       <section className="page-shell">
-        <h1>Cart</h1>
-        <p>Your cart is empty right now.</p>
-        <Link to="/shop" className="text-link">
-          Go shopping
-        </Link>
+        <div className="empty-state">
+          <h1>Cart</h1>
+          <p>Your cart is empty right now.</p>
+          <Link to="/shop" className="hero-button">
+            Go Shopping
+          </Link>
+        </div>
       </section>
     )
   }
@@ -78,27 +81,27 @@ const Cart = () => {
               />
               <div>
                 <h3>{item.name}</h3>
-                <p>{item.brand}</p>
-                <p>{safePrice(item.price)}</p>
-                <div className="quantity-row">
-                  <button type="button" onClick={() => updateCartQuantity(item._id, item.quantity - 1)}>
-                    -
+                <p className="brand-name">{item.brand}</p>
+                <p className="price">{safePrice(item.price)}</p>
+                <div className="quantity-controls">
+                  <button type="button" className="quantity-btn" onClick={() => updateCartQuantity(item._id, item.quantity - 1)}>
+                    <FiMinus />
                   </button>
-                  <span>{item.quantity}</span>
-                  <button type="button" onClick={() => updateCartQuantity(item._id, item.quantity + 1)}>
-                    +
+                  <span className="quantity-display">{item.quantity}</span>
+                  <button type="button" className="quantity-btn" onClick={() => updateCartQuantity(item._id, item.quantity + 1)}>
+                    <FiPlus />
                   </button>
                 </div>
               </div>
-              <button type="button" className="secondary" onClick={() => removeFromCart(item._id)}>
-                Remove
+              <button type="button" className="delete-btn" onClick={() => removeFromCart(item._id)} title="Remove item">
+                <FiTrash2 />
               </button>
             </article>
           ))}
         </div>
 
         <form className="checkout-card" onSubmit={submitHandler}>
-          <h2>Checkout</h2>
+          <h2>Checkout Details</h2>
           <label>
             Address
             <input
@@ -139,9 +142,18 @@ const Cart = () => {
             </select>
           </label>
           <div className="summary-box">
-            <p>Subtotal: {safePrice(subtotal)}</p>
-            <p>Delivery: Free</p>
-            <strong>Total: {safePrice(subtotal)}</strong>
+            <div>
+              <span>Subtotal</span>
+              <span>{safePrice(subtotal)}</span>
+            </div>
+            <div>
+              <span>Delivery</span>
+              <span>Free</span>
+            </div>
+            <div className="total">
+              <span>Total</span>
+              <span>{safePrice(subtotal)}</span>
+            </div>
           </div>
           {message ? <p className="success-text">{message}</p> : null}
           <button type="submit">Place Order</button>
@@ -152,3 +164,4 @@ const Cart = () => {
 }
 
 export default Cart
+

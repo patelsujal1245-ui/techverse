@@ -1,11 +1,13 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
+import { FiArrowRight } from 'react-icons/fi'
 
 const Hero = () => (
   <section className="hero-section">
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       className="hero-grid"
     >
       <div className="hero-copy">
@@ -17,7 +19,7 @@ const Hero = () => (
         </p>
         <div className="hero-actions">
           <Link to="/shop" className="hero-button">
-            Browse Products
+            Browse Products <FiArrowRight style={{ marginLeft: 6 }} />
           </Link>
           <Link to="/register" className="hero-button secondary">
             Create Account
@@ -26,15 +28,15 @@ const Hero = () => (
         <div className="hero-metrics">
           <div>
             <strong>12+</strong>
-            <span>products</span>
+            <span>Products</span>
           </div>
           <div>
             <strong>8</strong>
-            <span>categories</span>
+            <span>Categories</span>
           </div>
           <div>
             <strong>3</strong>
-            <span>core flows</span>
+            <span>Core Flows</span>
           </div>
         </div>
       </div>
@@ -69,3 +71,4 @@ const Hero = () => (
 )
 
 export default Hero
+

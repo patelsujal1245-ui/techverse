@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useContext } from 'react'
 import { ShopContext } from '../context/ShopContext'
 import { placeholderImage, safePrice } from '../data/catalog'
+import { FiTrash2, FiShoppingCart } from 'react-icons/fi'
 
 const Wishlist = () => {
   const { wishlist, removeFromWishlist, addToCart } = useContext(ShopContext)
@@ -14,12 +15,12 @@ const Wishlist = () => {
       </div>
 
       {!wishlist.length ? (
-        <>
+        <div className="empty-state">
           <p>Your wishlist is empty.</p>
-          <Link to="/shop" className="text-link">
-            Browse products
+          <Link to="/shop" className="hero-button">
+            Browse Products
           </Link>
-        </>
+        </div>
       ) : (
         <div className="wishlist-grid">
           {wishlist.map((item) => (
@@ -33,15 +34,21 @@ const Wishlist = () => {
               />
               <div>
                 <h3>{item.name}</h3>
-                <p>{safePrice(item.price)}</p>
-                <div className="card-actions">
-                  <button type="button" onClick={() => addToCart(item)}>
-                    Add to cart
-                  </button>
-                  <button type="button" className="secondary" onClick={() => removeFromWishlist(item._id)}>
-                    Remove
-                  </button>
-                </div>
+                <p className="brand-name">{item.brand}</p>
+                <p className="price">{safePrice(item.price)}</p>
+              </div>
+              <div className="card-actions" style={{ marginLeft: 'auto', alignItems: 'center' }}>
+                <button type="button" onClick={() => addToCart(item)} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <FiShoppingCart /> Add to cart
+                </button>
+                <button
+                  type="button"
+                  className="delete-btn"
+                  onClick={() => removeFromWishlist(item._id)}
+                  title="Remove from wishlist"
+                >
+                  <FiTrash2 />
+                </button>
               </div>
             </article>
           ))}
@@ -52,3 +59,4 @@ const Wishlist = () => {
 }
 
 export default Wishlist
+

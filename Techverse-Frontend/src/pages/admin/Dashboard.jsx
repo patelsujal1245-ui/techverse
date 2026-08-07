@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { fetchAdminStats } from '../../services/adminService'
 import { safePrice } from '../../data/catalog'
+import { FiArrowRight } from 'react-icons/fi'
 
 const Dashboard = () => {
   const [stats, setStats] = useState(null)
@@ -141,7 +142,7 @@ const Dashboard = () => {
 
       <div className="spaced-top">
         <Link to="/admin/products" className="hero-button">
-          Manage Products
+          Manage Products <FiArrowRight style={{ marginLeft: 6 }} />
         </Link>
       </div>
     </section>
@@ -149,3 +150,4 @@ const Dashboard = () => {
 }
 
 export default Dashboard
+
