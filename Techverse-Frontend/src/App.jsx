@@ -4,6 +4,7 @@ import { ShopProvider } from './context/ShopContext'
 import AppRoutes from './routes/AppRoutes'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import AIChatbot from './components/AIChatbot'
 import './App.css'
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
               <AppRoutes />
             </main>
             <Footer />
+            <AIChatbot />
           </div>
         </BrowserRouter>
       </ShopProvider>

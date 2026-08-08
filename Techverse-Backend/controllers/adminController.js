@@ -64,8 +64,15 @@ export const getAdminStats = async (req, res) => {
   ])
 
   const revenue = orders.reduce((sum, order) => sum + Number(order.totalPrice || 0), 0)
+  const activeRevenue = orders.filter((o) => o.orderStatus !== 'Cancelled').reduce((sum, o) => sum + Number(o.totalPrice || 0), 0)
+  const lossValue = orders.filter((o) => o.orderStatus === 'Cancelled').reduce((sum, o) => sum + Number(o.totalPrice || 0), 0)
+  const cogsValue = activeRevenue * 0.65 // 65% cost of goods sold
+  const netProfit = Math.max(0, activeRevenue - cogsValue) // net profit margin
+
   const admins = users.filter((user) => user.role === 'admin').length
   const pendingOrders = orders.filter((order) => order.orderStatus === 'Pending').length
+  const totalStock = products.reduce((sum, p) => sum + Number(p.stock || 0), 0)
+  
   const monthlySales = buildMonthlySales(orders)
   const categoryBreakdown = buildCategoryBreakdown(products)
   const topProducts = buildTopProducts(orders, products)
@@ -77,6 +84,11 @@ export const getAdminStats = async (req, res) => {
       admins,
       orders: orders.length,
       revenue,
+      activeRevenue,
+      lossValue,
+      cogsValue,
+      netProfit,
+      totalStock,
       averageOrderValue: orders.length ? revenue / orders.length : 0,
       pendingOrders,
     },

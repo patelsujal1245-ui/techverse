@@ -26,26 +26,64 @@ const buildOrderSeed = (products, customerId) => ({
 })
 
 export const seedDefaultData = async () => {
-  await Order.deleteMany()
-  await Product.deleteMany()
-  await Category.deleteMany()
-  await User.deleteMany()
+  // 1. Users seeding
+  const seededUsers = []
+  for (const defaultUser of defaultUsers) {
+    let user = await User.findOne({ email: defaultUser.email })
+    if (!user) {
+      const hashedPassword = await bcrypt.hash(defaultUser.password, 10)
+      user = await User.create({
+        ...defaultUser,
+        password: hashedPassword
+      })
+    }
+    seededUsers.push(user)
+  }
 
-  const users = await User.insertMany(
-    await Promise.all(
-      defaultUsers.map(async (user) => ({
-        ...user,
-        password: await bcrypt.hash(user.password, 10),
-      })),
-    ),
-  )
+  // 2. Categories seeding
+  for (const defaultCategory of defaultCategories) {
+    const exists = await Category.findOne({ name: defaultCategory.name })
+    if (!exists) {
+      await Category.create(defaultCategory)
+    }
+  }
 
-  await Category.insertMany(defaultCategories)
-  const products = await Product.insertMany(defaultProducts)
+  // 3. Products seeding
+  const seededProducts = []
+  for (const defaultProduct of defaultProducts) {
+    let product = await Product.findOne({ name: defaultProduct.name })
+    if (!product) {
+      product = await Product.create(defaultProduct)
+    }
+    seededProducts.push(product)
+  }
 
-  const customer = users.find((user) => user.email === 'jane@techverse.com')
-  if (customer && products.length) {
-    await Order.create(buildOrderSeed(products, customer._id))
+  // 4. Default Order seeding
+  const orderCount = await Order.countDocuments()
+  if (orderCount === 0) {
+    const customer = seededUsers.find((user) => user.email === 'jane@techverse.com')
+    if (customer && seededProducts.length) {
+      await Order.create({
+        user: customer._id,
+        orderItems: [
+          {
+            product: seededProducts[0]._id,
+            name: seededProducts[0].name,
+            quantity: 1,
+            price: seededProducts[0].price,
+          },
+        ],
+        shippingAddress: {
+          street: '123 College Lane',
+          city: 'Pune',
+          state: 'Maharashtra',
+          zip: '411001',
+        },
+        paymentMethod: 'Cash On Delivery',
+        totalPrice: seededProducts[0].price,
+        estimatedDelivery: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000)
+      })
+    }
   }
 }
 
@@ -56,11 +94,8 @@ export const seedDefaultDataIfNeeded = async () => {
     Category.countDocuments(),
   ])
 
-  if (
-    productCount < defaultProducts.length ||
-    userCount < defaultUsers.length ||
-    categoryCount < defaultCategories.length
-  ) {
+  // Only trigger seed if any collection is completely empty
+  if (productCount === 0 || userCount === 0 || categoryCount === 0) {
     await seedDefaultData()
     return { seeded: true }
   }

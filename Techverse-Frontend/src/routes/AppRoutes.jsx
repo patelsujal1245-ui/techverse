@@ -11,8 +11,10 @@ import Register from '../pages/Register'
 import Profile from '../pages/Profile'
 import About from '../pages/About'
 import Contact from '../pages/Contact'
+import MyOrders from '../pages/MyOrders'
 import Dashboard from '../pages/admin/Dashboard'
 import AdminProducts from '../pages/admin/AdminProducts'
+import AdminOrders from '../pages/admin/AdminOrders'
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useContext(AuthContext)
@@ -34,10 +36,12 @@ const AppRoutes = () => (
     <Route path="/login" element={<Login />} />
     <Route path="/register" element={<Register />} />
     <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+    <Route path="/my-orders" element={<ProtectedRoute><MyOrders /></ProtectedRoute>} />
     <Route path="/about" element={<About />} />
     <Route path="/contact" element={<Contact />} />
     <Route path="/admin/dashboard" element={<AdminRoute><Dashboard /></AdminRoute>} />
     <Route path="/admin/products" element={<AdminRoute><AdminProducts /></AdminRoute>} />
+    <Route path="/admin/orders" element={<AdminRoute><AdminOrders /></AdminRoute>} />
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>
 )

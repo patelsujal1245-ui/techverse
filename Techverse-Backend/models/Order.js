@@ -18,6 +18,10 @@ const orderSchema = mongoose.Schema(
     paymentMethod: { type: String, required: true },
     totalPrice: { type: Number, required: true },
     orderStatus: { type: String, default: 'Pending' },
+    currentLocation: { type: String, default: 'Noida Sorting Hub' },
+    estimatedDelivery: { type: Date },
+    shippedAt: { type: Date },
+    deliveredAt: { type: Date },
   },
   { timestamps: true }
 )

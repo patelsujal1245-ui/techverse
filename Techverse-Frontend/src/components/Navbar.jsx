@@ -52,6 +52,11 @@ const Navbar = () => {
         <Link to="/contact" className={location.pathname === '/contact' ? 'active' : ''}>
           Contact
         </Link>
+        {user && user.role !== 'admin' ? (
+          <Link to="/my-orders" className={location.pathname === '/my-orders' ? 'active' : ''}>
+            My Orders
+          </Link>
+        ) : null}
         {user?.role === 'admin' ? (
           <Link
             to="/admin/dashboard"
