@@ -816,7 +816,7 @@ export const fallbackProducts = [
   },
 ]
 
-const VITE_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+const VITE_API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:5000/api`
 const BACKEND_URL = VITE_API_URL.replace(/\/api\/?$/, '')
 
 export const normalizeProduct = (product) => {

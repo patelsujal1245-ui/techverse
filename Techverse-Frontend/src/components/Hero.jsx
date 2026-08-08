@@ -154,7 +154,7 @@ const Hero = ({ products = [] }) => {
                 position: 'relative'
               }}
             >
-              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '40px', alignItems: 'center' }}>
+              <div className="hero-slide-grid" style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '40px', alignItems: 'center' }}>
                 
                 {/* Left Side Content Column */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -251,7 +251,7 @@ const Hero = ({ products = [] }) => {
                   </div>
 
                   {/* Metrics */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginTop: '16px', borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: '20px' }}>
+                  <div className="hero-slide-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginTop: '16px', borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: '20px' }}>
                     {slide.metrics.map((metric, idx) => (
                       <div key={idx}>
                         <strong style={{ display: 'block', fontSize: '1.15rem', fontWeight: 800, color: '#0f172a' }}>

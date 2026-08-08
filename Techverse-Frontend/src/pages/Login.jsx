@@ -28,7 +28,7 @@ const Login = () => {
   }
 
   return (
-    <section className="page-shell auth-shell">
+    <section className="auth-shell">
       <div className="auth-page">
         <div className="auth-copy">
           <div>
