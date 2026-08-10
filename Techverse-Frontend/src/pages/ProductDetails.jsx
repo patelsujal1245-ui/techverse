@@ -64,6 +64,8 @@ const ProductDetails = () => {
   const savingAmount = product.oldPrice ? product.oldPrice - product.price : 0
   const savingPercent = product.oldPrice ? Math.round((savingAmount / product.oldPrice) * 100) : 0
   const ratingsCount = Math.floor((product.price % 300) + 142)
+  const isLowStock = product.stock > 0 && product.stock <= 5
+  const isOutOfStock = product.stock <= 0
 
   // Get dynamic delivery date (current date + 3 days)
   const getDeliveryDate = () => {
@@ -310,24 +312,25 @@ const ProductDetails = () => {
             <button 
               type="button" 
               onClick={handleAddToCart}
+              disabled={isOutOfStock}
               style={{
                 padding: '16px',
                 fontSize: '0.98rem',
                 fontWeight: 800,
                 borderRadius: 'var(--radius-md)',
                 border: 'none',
-                backgroundColor: added ? '#10b981' : '#ff9f00',
-                color: '#ffffff',
-                cursor: 'pointer',
+                backgroundColor: isOutOfStock ? '#cbd5e1' : (added ? '#10b981' : '#ff9f00'),
+                color: isOutOfStock ? '#64748b' : '#ffffff',
+                cursor: isOutOfStock ? 'not-allowed' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
                 transition: 'all 0.2s ease',
-                boxShadow: '0 4px 12px rgba(255, 159, 0, 0.2)'
+                boxShadow: isOutOfStock ? 'none' : '0 4px 12px rgba(255, 159, 0, 0.2)'
               }}
             >
-              <FiShoppingCart /> {added ? 'Added to Cart!' : 'Add to Cart'}
+              <FiShoppingCart /> {isOutOfStock ? 'Out of Stock' : (added ? 'Added to Cart!' : 'Add to Cart')}
             </button>
             
             <button 
@@ -379,9 +382,22 @@ const ProductDetails = () => {
           <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text)', lineHeight: 1.25, marginBottom: '6px' }}>
             {product.name}
           </h1>
-          <p style={{ color: 'var(--muted)', fontSize: '0.95rem', marginBottom: '16px' }}>
+          <p style={{ color: 'var(--muted)', fontSize: '0.95rem', marginBottom: '8px' }}>
             Brand: <strong style={{ color: 'var(--text)' }}>{product.brand}</strong>
           </p>
+          {isOutOfStock ? (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', backgroundColor: '#fef2f2', border: '1px solid #fca5a5', color: '#b91c1c', borderRadius: 'var(--radius-sm)', fontWeight: 700, fontSize: '0.85rem', width: 'fit-content', marginBottom: '16px' }}>
+              Out of Stock (Currently unavailable)
+            </div>
+          ) : isLowStock ? (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', backgroundColor: '#fffbeb', border: '1px solid #fde047', color: '#b45309', borderRadius: 'var(--radius-sm)', fontWeight: 700, fontSize: '0.85rem', width: 'fit-content', marginBottom: '16px' }}>
+              Hurry! Only {product.stock} pieces left in stock.
+            </div>
+          ) : (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 12px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534', borderRadius: 'var(--radius-sm)', fontWeight: 700, fontSize: '0.85rem', width: 'fit-content', marginBottom: '16px' }}>
+              In Stock ({product.stock} units available)
+            </div>
+          )}
 
           {/* Star Rating Breakdown */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid var(--border)', paddingBottom: '16px', marginBottom: '16px' }}>

@@ -1,6 +1,7 @@
 import Order from '../models/Order.js'
 import Product from '../models/Product.js'
 import User from '../models/User.js'
+import StockLog from '../models/StockLog.js'
 
 const buildMonthlySales = (orders) => {
   const buckets = new Map()
@@ -100,5 +101,16 @@ export const getAdminStats = async (req, res) => {
     monthlySales,
     topProducts,
   })
+}
+
+export const getWarehouseLogs = async (req, res) => {
+  try {
+    const logs = await StockLog.find({})
+      .populate('product', 'name images brand')
+      .sort({ createdAt: -1 })
+    res.json(logs)
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
 }
 

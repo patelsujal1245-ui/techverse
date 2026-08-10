@@ -35,14 +35,21 @@ export const ShopProvider = ({ children }) => {
   const addToCart = (product, quantity = 1) => {
     setCart((current) => {
       const existing = current.find((item) => item._id === product._id)
+      const currentQty = existing ? existing.quantity : 0
+      const totalRequested = currentQty + quantity
+      const maxStock = product.stock !== undefined ? product.stock : 999
+      const allowedQty = Math.min(totalRequested, maxStock)
+
+      if (allowedQty <= 0) return current
+
       if (existing) {
         return current.map((item) =>
           item._id === product._id
-            ? { ...item, quantity: item.quantity + quantity }
+            ? { ...item, quantity: allowedQty }
             : item,
         )
       }
-      return [...current, { ...product, quantity }]
+      return [...current, { ...product, quantity: Math.min(quantity, maxStock) }]
     })
   }
 
@@ -50,7 +57,13 @@ export const ShopProvider = ({ children }) => {
     setCart((current) =>
       quantity <= 0
         ? current.filter((item) => item._id !== productId)
-        : current.map((item) => (item._id === productId ? { ...item, quantity } : item)),
+        : current.map((item) => {
+            if (item._id === productId) {
+              const maxStock = item.stock !== undefined ? item.stock : 999
+              return { ...item, quantity: Math.min(quantity, maxStock) }
+            }
+            return item
+          })
     )
   }
 

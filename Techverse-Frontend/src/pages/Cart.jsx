@@ -6,6 +6,23 @@ import { createOrder } from '../services/orderService'
 import { placeholderImage, safePrice } from '../data/catalog'
 import { FiPlus, FiMinus, FiTrash2, FiMapPin, FiCreditCard, FiCheckCircle, FiInfo, FiArrowLeft, FiShoppingBag } from 'react-icons/fi'
 
+const STATE_CITIES = {
+  "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Thane", "Nashik", "Aurangabad", "Navi Mumbai"],
+  "Karnataka": ["Bengaluru", "Mysuru", "Hubli", "Mangaluru", "Belagavi", "Dharwad"],
+  "Delhi": ["New Delhi", "Dwarka", "Rohini", "Connaught Place", "Vasant Kunj"],
+  "Gujarat": ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Gandhinagar", "Bhavnagar"],
+  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Tiruchirappalli", "Salem", "Tiruppur"],
+  "Telangana": ["Hyderabad", "Warangal", "Nizamabad", "Karimnagar", "Khammam"],
+  "Uttar Pradesh": ["Noida", "Lucknow", "Kanpur", "Ghaziabad", "Agra", "Varanasi", "Prayagraj"],
+  "West Bengal": ["Kolkata", "Howrah", "Darjeeling", "Siliguri", "Asansol", "Durgapur"],
+  "Rajasthan": ["Jaipur", "Jodhpur", "Udaipur", "Kota", "Bikaner", "Ajmer"],
+  "Kerala": ["Kochi", "Thiruvananthapuram", "Kozhikode", "Thrissur", "Kollam"],
+  "Punjab": ["Ludhiana", "Amritsar", "Jalandhar", "Patiala", "Bathinda"],
+  "Haryana": ["Gurgaon", "Faridabad", "Panipat", "Ambala", "Karnal"],
+  "Madhya Pradesh": ["Indore", "Bhopal", "Jabalpur", "Gwalior", "Ujjain"],
+  "Bihar": ["Patna", "Gaya", "Bhagalpur", "Muzaffarpur", "Purnia"]
+}
+
 const Cart = () => {
   const navigate = useNavigate()
   const { user } = useContext(AuthContext)
@@ -28,6 +45,8 @@ const Cart = () => {
   const [createdOrder, setCreatedOrder] = useState(null)
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  const upiDiscount = paymentMethod === 'UPI' ? Math.round(subtotal * 0.05) : 0
+  const totalPayable = subtotal - upiDiscount
 
   const handleNextToAddress = () => {
     if (!user?.token) {
@@ -38,10 +57,22 @@ const Cart = () => {
     setStep(2)
   }
 
+  const handleStateChange = (selectedState) => {
+    setShippingAddress((prev) => ({
+      ...prev,
+      state: selectedState,
+      city: STATE_CITIES[selectedState]?.[0] || ''
+    }))
+  }
+
   const handleNextToPayment = (e) => {
     e.preventDefault()
     if (!shippingAddress.street || !shippingAddress.city || !shippingAddress.state || !shippingAddress.zip) {
       setMessage('Please fill in all address details.')
+      return
+    }
+    if (!/^\d{6}$/.test(shippingAddress.zip)) {
+      setMessage('Please enter a valid 6-digit Indian PIN code / Pincode (e.g. 411001).')
       return
     }
     setMessage('')
@@ -69,7 +100,7 @@ const Cart = () => {
         })),
         shippingAddress,
         paymentMethod,
-        totalPrice: subtotal,
+        totalPrice: totalPayable,
       })
       
       setCreatedOrder(data)
@@ -93,7 +124,7 @@ const Cart = () => {
   }
 
   // Dynamic QR code API generator link
-  const upiUrl = `upi://pay?pa=techverse@paytm&pn=Techverse%20Retail&am=${subtotal}&cu=INR`
+  const upiUrl = `upi://pay?pa=techverse@paytm&pn=Techverse%20Retail&am=${totalPayable}&cu=INR`
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiUrl)}`
 
   if (!cart.length && step < 4) {
@@ -217,27 +248,34 @@ const Cart = () => {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                   <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.9rem', fontWeight: 700, color: 'var(--text)' }}>
+                    State
+                    <select
+                      value={shippingAddress.state}
+                      onChange={(e) => handleStateChange(e.target.value)}
+                      style={{ padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', outline: 'none', fontSize: '0.9rem', background: '#fff', cursor: 'pointer' }}
+                      required
+                    >
+                      <option value="">Select State</option>
+                      {Object.keys(STATE_CITIES).map((st) => (
+                        <option key={st} value={st}>{st}</option>
+                      ))}
+                    </select>
+                  </label>
+
+                  <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.9rem', fontWeight: 700, color: 'var(--text)' }}>
                     City
-                    <input
-                      type="text"
+                    <select
                       value={shippingAddress.city}
                       onChange={(e) => setShippingAddress({ ...shippingAddress, city: e.target.value })}
-                      placeholder="e.g. Pune"
-                      style={{ padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', outline: 'none', fontSize: '0.9rem' }}
+                      style={{ padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', outline: 'none', fontSize: '0.9rem', background: '#fff', cursor: 'pointer' }}
+                      disabled={!shippingAddress.state}
                       required
-                    />
-                  </label>
-                  
-                  <label style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '0.9rem', fontWeight: 700, color: 'var(--text)' }}>
-                    State
-                    <input
-                      type="text"
-                      value={shippingAddress.state}
-                      onChange={(e) => setShippingAddress({ ...shippingAddress, state: e.target.value })}
-                      placeholder="e.g. Maharashtra"
-                      style={{ padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', outline: 'none', fontSize: '0.9rem' }}
-                      required
-                    />
+                    >
+                      <option value="">Select City</option>
+                      {shippingAddress.state && STATE_CITIES[shippingAddress.state]?.map((ct) => (
+                        <option key={ct} value={ct}>{ct}</option>
+                      ))}
+                    </select>
                   </label>
                 </div>
 
@@ -335,7 +373,7 @@ const Cart = () => {
                     </div>
 
                     <strong style={{ fontSize: '1.2rem', color: 'var(--text)' }}>
-                      Total Amount: {safePrice(subtotal)}
+                      Total Amount: {safePrice(totalPayable)} <span style={{ fontSize: '0.8rem', color: '#10b981' }}>(5% UPI Discount Applied)</span>
                     </strong>
                     
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', padding: '10px 14px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 'var(--radius-sm)', maxWidth: '400px', fontSize: '0.78rem', color: '#166534', textAlign: 'left' }}>
@@ -344,13 +382,13 @@ const Cart = () => {
                     </div>
                   </div>
                 )}
-
+ 
                 <div style={{ display: 'flex', gap: '16px', marginTop: '12px' }}>
                   <button type="button" onClick={() => setStep(2)} style={{ padding: '12px 20px', border: '1px solid var(--border)', color: 'var(--text)', background: 'transparent', borderRadius: 'var(--radius-sm)', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <FiArrowLeft /> Back to Address
                   </button>
                   <button type="submit" disabled={loading} style={{ flex: 1, padding: '12px 20px', backgroundColor: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', fontWeight: 700, cursor: 'pointer' }}>
-                    {loading ? 'Processing...' : `Place Order (${safePrice(subtotal)})`}
+                    {loading ? 'Processing...' : `Place Order (${safePrice(totalPayable)})`}
                   </button>
                 </div>
               </div>
@@ -442,9 +480,15 @@ const Cart = () => {
                   <span>Delivery Fee</span>
                   <span style={{ color: '#10b981', fontWeight: 700 }}>Free</span>
                 </div>
+                {upiDiscount > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#10b981', fontWeight: 700 }}>
+                    <span>UPI Discount (5%)</span>
+                    <span>-{safePrice(upiDiscount)}</span>
+                  </div>
+                )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.05rem', fontWeight: 800, color: 'var(--text)', paddingTop: '12px', borderTop: '1px solid var(--border)' }}>
                   <span>Total Payable</span>
-                  <span>{safePrice(subtotal)}</span>
+                  <span>{safePrice(totalPayable)}</span>
                 </div>
               </div>
               

@@ -1,4 +1,6 @@
 import Order from '../models/Order.js'
+import Product from '../models/Product.js'
+import StockLog from '../models/StockLog.js'
 
 export const createOrder = async (req, res) => {
   const { orderItems, shippingAddress, paymentMethod, totalPrice } = req.body
@@ -17,6 +19,28 @@ export const createOrder = async (req, res) => {
   })
 
   const createdOrder = await order.save()
+
+  // Decrement stock and write StockLog
+  for (const item of orderItems) {
+    const product = await Product.findById(item.product)
+    if (product) {
+      const oldStock = product.stock || 0
+      const newStock = Math.max(0, oldStock - item.quantity)
+      product.stock = newStock
+      await product.save()
+
+      await StockLog.create({
+        product: product._id,
+        productName: product.name,
+        changeType: 'Sale',
+        quantityChanged: -item.quantity,
+        oldStock,
+        newStock,
+        details: `Order #${createdOrder._id.toString().substring(18)}`
+      })
+    }
+  }
+
   res.status(201).json(createdOrder)
 }
 
@@ -44,14 +68,35 @@ export const updateOrderStatus = async (req, res) => {
   const order = await Order.findById(req.params.id)
 
   if (order) {
-    if (orderStatus) {
+    if (orderStatus && order.orderStatus !== orderStatus) {
+      const prevStatus = order.orderStatus
       order.orderStatus = orderStatus
       if (orderStatus === 'Completed') {
         order.deliveredAt = new Date()
       } else if (orderStatus === 'Shipping') {
         order.shippedAt = new Date()
-      } else if (orderStatus === 'Cancelled') {
+      } else if (orderStatus === 'Cancelled' && prevStatus !== 'Cancelled') {
         order.currentLocation = 'Order Cancelled by Admin'
+        // Restore stock and write log
+        for (const item of order.orderItems) {
+          const product = await Product.findById(item.product)
+          if (product) {
+            const oldStock = product.stock || 0
+            const newStock = oldStock + item.quantity
+            product.stock = newStock
+            await product.save()
+
+            await StockLog.create({
+              product: product._id,
+              productName: product.name,
+              changeType: 'Cancellation',
+              quantityChanged: item.quantity,
+              oldStock,
+              newStock,
+              details: `Order #${order._id.toString().substring(18)} Cancelled by Admin`
+            })
+          }
+        }
       }
     }
     
@@ -85,6 +130,27 @@ export const cancelOrder = async (req, res) => {
     order.orderStatus = 'Cancelled'
     order.currentLocation = 'Order Cancelled by Customer'
     
+    // Restore stock and write log
+    for (const item of order.orderItems) {
+      const product = await Product.findById(item.product)
+      if (product) {
+        const oldStock = product.stock || 0
+        const newStock = oldStock + item.quantity
+        product.stock = newStock
+        await product.save()
+
+        await StockLog.create({
+          product: product._id,
+          productName: product.name,
+          changeType: 'Cancellation',
+          quantityChanged: item.quantity,
+          oldStock,
+          newStock,
+          details: `Order #${order._id.toString().substring(18)} Cancelled by Customer`
+        })
+      }
+    }
+
     const updatedOrder = await order.save()
     res.json(updatedOrder)
   } else {

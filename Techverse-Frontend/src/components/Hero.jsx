@@ -1,376 +1,374 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { FiArrowRight, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
+import { FiArrowRight, FiShoppingCart, FiCpu, FiStar, FiShoppingBag } from 'react-icons/fi'
 import { placeholderImage } from '../data/catalog'
 
 const Hero = ({ products = [] }) => {
-  const [currentSlide, setCurrentSlide] = useState(0)
-  const timerRef = useRef(null)
+  const [activeTab, setActiveTab] = useState('All')
+  const [rotationDegree, setRotationDegree] = useState(0)
 
-  // Map backend products dynamically to campaign slides with premium accents
-  const campaignSlides = useMemo(() => {
+  // Get one featured product per category dynamically
+  const showcaseProducts = useMemo(() => {
     if (!products || products.length === 0) return []
     
-    return products.slice(0, 6).map((product, index) => {
-      const themes = [
-        { accent: '#2563eb', text: '#1e3a8a' },
-        { accent: '#7c3aed', text: '#4c1d95' },
-        { accent: '#db2777', text: '#701a75' },
-        { accent: '#e11d48', text: '#881337' },
-        { accent: '#0284c7', text: '#0c4a6e' },
-        { accent: '#059669', text: '#064e3b' }
-      ]
-      
-      const theme = themes[index % themes.length]
-
-      return {
-        id: product._id,
-        accentColor: theme.accent,
-        textColor: theme.text,
-        eyebrow: `Trending in ${product.category}`,
-        title: product.name,
-        sub: product.description,
-        ctaText: 'View Details',
-        ctaLink: `/product/${product._id}`,
-        secondaryText: 'Shop Category',
-        secondaryLink: `/shop?category=${encodeURIComponent(product.category)}`,
-        metrics: [
-          { value: product.brand, label: 'Manufacturer' },
-          { value: product.rating ? `${product.rating.toFixed(1)} ★` : '4.5 ★', label: 'User Rating' },
-          { value: product.stock > 0 ? `${product.stock} Left` : 'Out of Stock', label: 'Stock Level' }
-        ],
-        image: product.images?.[0] || placeholderImage,
-        featuredLabel: product.category,
-        featuredTitle: product.name
-      }
+    // Group products by category
+    const categories = ['Audio', 'Wearables', 'Laptops', 'Cameras', 'Gaming']
+    const selected = []
+    
+    categories.forEach(cat => {
+      const match = products.find(p => p.category === cat)
+      if (match) selected.push(match)
     })
+    
+    // Fallback to top products if categories are missing
+    if (selected.length === 0) {
+      return products.slice(0, 5)
+    }
+    return selected
   }, [products])
 
-  const handleNext = useCallback(() => {
-    setCurrentSlide((prev) => (prev === campaignSlides.length - 1 ? 0 : prev + 1))
-  }, [campaignSlides])
+  // Active product based on tab selection
+  const activeProduct = useMemo(() => {
+    if (showcaseProducts.length === 0) return null
+    if (activeTab === 'All') return showcaseProducts[0]
+    return showcaseProducts.find(p => p.category === activeTab) || showcaseProducts[0]
+  }, [showcaseProducts, activeTab])
 
-  const handlePrev = useCallback(() => {
-    setCurrentSlide((prev) => (prev === 0 ? campaignSlides.length - 1 : prev - 1))
-  }, [campaignSlides])
-
-  const stopTimer = useCallback(() => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current)
-    }
-  }, [])
-
-  const startTimer = useCallback(() => {
-    stopTimer()
-    if (campaignSlides.length > 1) {
-      timerRef.current = setInterval(() => {
-        handleNext()
-      }, 7000)
-    }
-  }, [handleNext, stopTimer, campaignSlides])
-
+  // Trigger rotation animation on tab changes
   useEffect(() => {
-    startTimer()
-    return () => stopTimer()
-  }, [startTimer, stopTimer])
+    setRotationDegree(prev => prev + 360)
+  }, [activeTab])
 
-  if (campaignSlides.length === 0) {
+  // Auto-switch tabs every 8 seconds unless interacted
+  useEffect(() => {
+    if (showcaseProducts.length <= 1) return
+    
+    const timer = setInterval(() => {
+      setActiveTab(prev => {
+        const currentIdx = showcaseProducts.findIndex(p => p.category === prev)
+        const nextIdx = (currentIdx + 1) % showcaseProducts.length
+        return showcaseProducts[nextIdx]?.category || 'All'
+      })
+    }, 8000)
+    
+    return () => clearInterval(timer)
+  }, [showcaseProducts])
+
+  if (!activeProduct) {
     return (
-      <div style={{ height: '360px', background: 'var(--bg-soft)', borderRadius: 'var(--radius-xl)', display: 'grid', placeItems: 'center', border: '1px solid var(--border)', margin: '40px 0' }}>
-        <p style={{ color: 'var(--muted)' }}>Loading promotional spotlight...</p>
+      <div style={{ height: '380px', background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)', borderRadius: 'var(--radius-xl)', display: 'grid', placeItems: 'center', border: '1px solid var(--border)', margin: '20px 0 56px' }}>
+        <p style={{ color: 'var(--muted)', fontWeight: 600 }}>Loading interactive tech collections...</p>
       </div>
     )
   }
 
-  const currentCampaign = campaignSlides[currentSlide]
+  const upiPrice = activeProduct.price * 0.95
+  const isLowStock = activeProduct.stock > 0 && activeProduct.stock <= 5
+  const isOut = activeProduct.stock <= 0
 
   return (
     <section 
-      onMouseEnter={stopTimer}
-      onMouseLeave={startTimer}
       style={{
+        display: 'grid',
+        gridTemplateColumns: '1.2fr 0.8fr',
+        gap: '40px',
+        alignItems: 'center',
+        background: 'linear-gradient(135deg, #ffffff 0%, #fbfcfe 50%, #f4f7fe 100%)',
+        border: '1px solid var(--border)',
         borderRadius: 'var(--radius-xl)',
+        padding: '50px 6%',
         position: 'relative',
         overflow: 'hidden',
-        boxShadow: 'var(--shadow-soft)',
-        margin: '20px 0 56px',
-        border: '1px solid rgba(0,0,0,0.06)',
-        backgroundColor: '#ffffff'
+        boxShadow: '0 25px 60px -25px rgba(15, 23, 42, 0.06), var(--shadow-soft)',
+        margin: '20px 0 56px'
       }}
+      className="hero-redesign"
     >
-      {/* Background Image (High-Resolution Minimalist Tech Desk Setup) */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          backgroundImage: "url('https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?q=80&w=1600&auto=format&fit=crop')",
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          zIndex: 0
-        }}
-      />
-
-      {/* Frosted Glass Overlay (Blends image softly and maintains clean white theme) */}
+      {/* Soft pastel blur background elements */}
       <div 
         style={{
           position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          backgroundColor: 'rgba(255, 255, 255, 0.85)',
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-          zIndex: 1
+          top: '-10%',
+          right: '-10%',
+          width: '500px',
+          height: '500px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%)',
+          filter: 'blur(45px)',
+          zIndex: 1,
+          pointerEvents: 'none'
+        }}
+      />
+      <div 
+        style={{
+          position: 'absolute',
+          bottom: '-15%',
+          left: '5%',
+          width: '350px',
+          height: '350px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(236, 72, 153, 0.06) 0%, transparent 70%)',
+          filter: 'blur(35px)',
+          zIndex: 1,
+          pointerEvents: 'none'
         }}
       />
 
-      {/* Horizontal Sliding Track (Interactive elements float over image background) */}
-      <div 
-        style={{
-          display: 'flex',
-          transition: 'transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
-          transform: `translateX(-${currentSlide * 100}%)`,
-          width: '100%',
-          position: 'relative',
-          zIndex: 2
-        }}
-      >
-        {campaignSlides.map((slide, idx) => {
-          const isActive = idx === currentSlide
-          return (
-            <div 
-              key={slide.id}
-              style={{
-                flex: '0 0 100%',
-                width: '100%',
-                background: 'transparent',
-                color: '#0f172a',
-                padding: '56px 6%',
-                boxSizing: 'border-box',
-                position: 'relative'
-              }}
-            >
-              <div className="hero-slide-grid" style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '40px', alignItems: 'center' }}>
-                
-                {/* Left Side Content Column */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  <span 
-                    style={{ 
-                      fontSize: '0.75rem', 
-                      fontWeight: 800, 
-                      textTransform: 'uppercase', 
-                      color: slide.accentColor, 
-                      letterSpacing: '0.08em',
-                      backgroundColor: 'rgba(255,255,255,0.75)',
-                      padding: '6px 14px',
-                      borderRadius: '99px',
-                      width: 'fit-content',
-                      border: '1px solid rgba(0,0,0,0.06)',
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
-                    }}
-                  >
-                    {slide.eyebrow}
-                  </span>
-                  
-                  <h1 
-                    style={{ 
-                      fontSize: '2.8rem', 
-                      fontWeight: 900, 
-                      lineHeight: 1.15, 
-                      letterSpacing: '-0.02em',
-                      color: '#0f172a',
-                      margin: 0,
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden'
-                    }}
-                  >
-                    {slide.title}
-                  </h1>
+      {/* LEFT COLUMN: Asymmetrical Bold Content */}
+      <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        
+        {/* Interactive Category Selector Pills */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          {showcaseProducts.map((p) => {
+            const isActive = activeTab === p.category
+            return (
+              <button
+                key={p._id}
+                onClick={() => setActiveTab(p.category)}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '99px',
+                  border: isActive ? '1px solid var(--accent)' : '1px solid var(--border)',
+                  backgroundColor: isActive ? '#ffffff' : 'transparent',
+                  color: isActive ? 'var(--accent)' : 'var(--muted)',
+                  fontSize: '0.78rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  boxShadow: isActive ? '0 4px 12px rgba(15,23,42,0.04)' : 'none',
+                  transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+                }}
+              >
+                {p.category}
+              </button>
+            )
+          })}
+        </div>
 
-                  <p 
-                    style={{ 
-                      fontSize: '0.98rem', 
-                      color: '#475569', 
-                      lineHeight: '1.5',
-                      margin: 0,
-                      maxWidth: '520px',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden'
-                    }}
-                  >
-                    {slide.sub}
-                  </p>
+        {/* Hero Title */}
+        <h1 
+          style={{ 
+            fontSize: '3.6rem', 
+            fontWeight: 950, 
+            lineHeight: '1.05', 
+            letterSpacing: '-0.04em', 
+            color: 'var(--text)', 
+            margin: 0 
+          }}
+        >
+          Curated. High-End.<br />
+          <span 
+            style={{ 
+              background: 'linear-gradient(135deg, var(--accent) 0%, #db2777 100%)', 
+              WebkitBackgroundClip: 'text', 
+              WebkitTextFillColor: 'transparent' 
+            }}
+          >
+            Campus Tech Drops.
+          </span>
+        </h1>
 
-                  <div style={{ display: 'flex', gap: '16px', marginTop: '8px' }}>
-                    <Link 
-                      to={slide.ctaLink} 
-                      style={{
-                        backgroundColor: slide.accentColor,
-                        color: '#ffffff',
-                        border: 'none',
-                        padding: '12px 28px',
-                        borderRadius: 'var(--radius-sm)',
-                        fontWeight: 800,
-                        textDecoration: 'none',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        boxShadow: `0 4px 14px rgba(15, 23, 42, 0.1)`
-                      }}
-                    >
-                      {slide.ctaText} <FiArrowRight />
-                    </Link>
-                    
-                    <Link 
-                      to={slide.secondaryLink}
-                      style={{
-                        backgroundColor: '#ffffff',
-                        color: '#0f172a',
-                        border: '1px solid var(--border)',
-                        padding: '12px 24px',
-                        borderRadius: 'var(--radius-sm)',
-                        fontWeight: 700,
-                        textDecoration: 'none',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        transition: 'all 0.2s ease',
-                        boxShadow: 'var(--shadow-soft)'
-                      }}
-                    >
-                      {slide.secondaryText}
-                    </Link>
-                  </div>
+        {/* Hero Description */}
+        <p style={{ color: 'var(--muted)', fontSize: '1rem', lineHeight: '1.6', margin: 0, maxWidth: '520px' }}>
+          Experience the next level of computation and immersive audio. Handpicked catalogs with automated stock alerts and instant UPI payments discounts.
+        </p>
 
-                  {/* Metrics */}
-                  <div className="hero-slide-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginTop: '16px', borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: '20px' }}>
-                    {slide.metrics.map((metric, idx) => (
-                      <div key={idx}>
-                        <strong style={{ display: 'block', fontSize: '1.15rem', fontWeight: 800, color: '#0f172a' }}>
-                          {metric.value}
-                        </strong>
-                        <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
-                          {metric.label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+        {/* Core details checklist */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.88rem', color: 'var(--text)', fontWeight: 700 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--accent)' }} />
+            <span>Instant 5% discount when paying with UPI method</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'var(--accent)' }} />
+            <span>Live local warehouse inventory synchronization</span>
+          </div>
+        </div>
 
-                {/* Right Side Image Showcase Column */}
-                <div style={{ display: 'flex', justifyContent: 'center' }}>
-                  <div 
-                    style={{ 
-                      width: '100%', 
-                      maxWidth: '300px', 
-                      aspectRatio: 1, 
-                      backgroundColor: '#ffffff', 
-                      borderRadius: 'var(--radius-lg)', 
-                      padding: '20px', 
-                      display: 'grid', 
-                      placeItems: 'center',
-                      boxShadow: '0 12px 28px rgba(0,0,0,0.06)',
-                      border: '1px solid var(--border)',
-                      transform: isActive ? 'scale(1) rotate(0deg)' : 'scale(0.92) rotate(-2deg)',
-                      transition: 'transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)'
-                    }}
-                  >
-                    <img 
-                      src={slide.image} 
-                      alt={slide.title} 
-                      style={{ maxHeight: '220px', maxWidth: '100%', objectFit: 'contain' }}
-                    />
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Slide Navigation Buttons */}
-      <button 
-        onClick={handlePrev} 
-        style={{
-          position: 'absolute',
-          left: '12px',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          width: '40px',
-          height: '40px',
-          borderRadius: '50%',
-          backgroundColor: 'rgba(255,255,255,0.75)',
-          border: '1px solid var(--border)',
-          color: '#0f172a',
-          cursor: 'pointer',
-          display: 'grid',
-          placeItems: 'center',
-          zIndex: 10,
-          outline: 'none',
-          transition: 'all 0.2s ease',
-          boxShadow: 'var(--shadow-soft)'
-        }}
-        aria-label="Previous Campaign"
-      >
-        <FiChevronLeft style={{ fontSize: '1.2rem' }} />
-      </button>
-      
-      <button 
-        onClick={handleNext} 
-        style={{
-          position: 'absolute',
-          right: '12px',
-          top: '50%',
-          transform: 'translateY(-50%)',
-          width: '40px',
-          height: '40px',
-          borderRadius: '50%',
-          backgroundColor: 'rgba(255,255,255,0.75)',
-          border: '1px solid var(--border)',
-          color: '#0f172a',
-          cursor: 'pointer',
-          display: 'grid',
-          placeItems: 'center',
-          zIndex: 10,
-          outline: 'none',
-          transition: 'all 0.2s ease',
-          boxShadow: 'var(--shadow-soft)'
-        }}
-        aria-label="Next Campaign"
-      >
-        <FiChevronRight style={{ fontSize: '1.2rem' }} />
-      </button>
-
-      {/* Slide Indicators */}
-      <div style={{ position: 'absolute', bottom: '16px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '8px', zIndex: 10 }}>
-        {campaignSlides.map((_, idx) => (
-          <button
-            key={idx}
-            onClick={() => setCurrentSlide(idx)}
+        {/* Action Buttons */}
+        <div style={{ display: 'flex', gap: '16px', marginTop: '6px' }}>
+          <Link 
+            to={`/product/${activeProduct._id}`} 
             style={{
-              width: '8px',
-              height: '8px',
-              borderRadius: '50%',
-              backgroundColor: currentSlide === idx ? currentCampaign.accentColor : 'rgba(0,0,0,0.15)',
+              backgroundColor: 'var(--accent)',
+              color: '#ffffff',
               border: 'none',
-              cursor: 'pointer',
-              padding: 0,
-              outline: 'none',
+              padding: '14px 32px',
+              borderRadius: 'var(--radius-sm)',
+              fontWeight: 800,
+              textDecoration: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 10px 25px rgba(15,23,42,0.15)',
               transition: 'all 0.3s ease'
             }}
-            aria-label={`Slide ${idx + 1}`}
-          />
-        ))}
+            className="hero-new-primary"
+          >
+            Explore Product <FiArrowRight />
+          </Link>
+          <Link 
+            to="/shop" 
+            style={{
+              backgroundColor: '#ffffff',
+              color: 'var(--text)',
+              border: '1px solid var(--border)',
+              padding: '14px 28px',
+              borderRadius: 'var(--radius-sm)',
+              fontWeight: 700,
+              textDecoration: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              boxShadow: 'var(--shadow-soft)'
+            }}
+            className="hero-new-secondary"
+          >
+            View All Catalog
+          </Link>
+        </div>
+
       </div>
+
+      {/* RIGHT COLUMN: Interactive Floating Glass Spec Panel */}
+      <div 
+        style={{ 
+          position: 'relative', 
+          zIndex: 2, 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center' 
+        }}
+      >
+        <div 
+          style={{
+            width: '100%',
+            maxWidth: '340px',
+            backgroundColor: '#ffffff',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-xl)',
+            padding: '24px',
+            boxShadow: '0 25px 50px -12px rgba(15, 23, 42, 0.08), var(--shadow-soft)',
+            position: 'relative',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '16px'
+          }}
+        >
+          {/* Rating floating tag */}
+          <div 
+            style={{ 
+              position: 'absolute', 
+              top: '-12px', 
+              left: '20px', 
+              backgroundColor: '#ffffff', 
+              border: '1px solid var(--border)', 
+              borderRadius: '99px', 
+              padding: '4px 12px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '4px',
+              fontSize: '0.78rem',
+              fontWeight: 800,
+              boxShadow: 'var(--shadow-soft)'
+            }}
+          >
+            <FiStar style={{ color: '#eab308', fill: '#eab308' }} /> {activeProduct.rating ? activeProduct.rating.toFixed(1) : '4.5'} Rating
+          </div>
+
+          {/* Product Image Frame */}
+          <div 
+            style={{ 
+              height: '200px', 
+              display: 'grid', 
+              placeItems: 'center', 
+              background: 'radial-gradient(circle, #f8fafc 0%, #ffffff 100%)', 
+              borderRadius: 'var(--radius-lg)',
+              border: '1px solid rgba(0,0,0,0.02)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+          >
+            <img 
+              src={activeProduct.images?.[0] || placeholderImage} 
+              alt={activeProduct.name}
+              style={{ 
+                maxHeight: '160px', 
+                maxWidth: '90%', 
+                objectFit: 'contain',
+                transform: `rotate(${rotationDegree}deg)`,
+                transition: 'transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
+                filter: 'drop-shadow(0 10px 15px rgba(0,0,0,0.06))'
+              }}
+            />
+          </div>
+
+          {/* Name & Stock info */}
+          <div>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--muted)', letterSpacing: '0.05em' }}>
+              {activeProduct.brand}
+            </span>
+            <strong style={{ display: 'block', fontSize: '1.1rem', fontWeight: 800, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {activeProduct.name}
+            </strong>
+          </div>
+
+          {/* Pricing Row with UPI Promo */}
+          <div 
+            style={{ 
+              backgroundColor: '#eff6ff', 
+              border: '1px solid #bfdbfe', 
+              borderRadius: 'var(--radius-md)', 
+              padding: '12px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <span style={{ fontSize: '0.75rem', color: '#1e40af', fontWeight: 700 }}>Regular: {activeProduct.price ? `₹${activeProduct.price.toLocaleString('en-IN')}` : '₹0'}</span>
+              <strong style={{ fontSize: '1.15rem', color: '#1e3a8a', fontWeight: 900 }}>₹{upiPrice.toLocaleString('en-IN')}</strong>
+            </div>
+            <span style={{ fontSize: '0.68rem', color: '#1e40af', fontWeight: 800 }}>⚡ 5% Instant UPI Discount Applied</span>
+          </div>
+
+          {/* Stock Availability Footer Tag */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              {isOut ? (
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#b91c1c' }}>Out of Stock</span>
+              ) : isLowStock ? (
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#b45309' }}>Only {activeProduct.stock} left!</span>
+              ) : (
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#166534' }}>In Stock (Warehouse synced)</span>
+              )}
+            </div>
+            <Link 
+              to={`/product/${activeProduct._id}`}
+              style={{
+                fontSize: '0.78rem',
+                fontWeight: 800,
+                color: 'var(--accent)',
+                textDecoration: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+            >
+              Specifications <FiArrowRight />
+            </Link>
+          </div>
+
+        </div>
+      </div>
+
+      <style>{`
+        .hero-new-primary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 30px rgba(15,23,42,0.25) !important;
+        }
+        .hero-new-secondary:hover {
+          background-color: var(--bg-soft) !important;
+        }
+      `}</style>
 
     </section>
   )

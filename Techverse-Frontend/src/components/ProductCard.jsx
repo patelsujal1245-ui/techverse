@@ -26,6 +26,8 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, inWishlist, layou
   const reviewsCount = Math.floor((product.price % 300) + 42) // Semi-random realistic review counts
 
   const isDark = theme === 'dark'
+  const isLowStock = product.stock > 0 && product.stock <= 5
+  const isOutOfStock = product.stock <= 0
 
   if (layout === 'list') {
     return (
@@ -102,6 +104,16 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, inWishlist, layou
           <p style={{ fontSize: '0.82rem', color: isDark ? '#94a3b8' : 'var(--muted)', margin: 0 }}>
             Brand: <strong style={{ color: isDark ? '#cbd5e1' : 'var(--text)' }}>{product.brand}</strong>
           </p>
+          {isOutOfStock && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', color: '#dc2626', backgroundColor: '#fef2f2', padding: '2px 8px', borderRadius: '4px', border: '1px solid #fca5a5', fontWeight: 700, width: 'fit-content', marginTop: '4px' }}>
+              Out of Stock
+            </div>
+          )}
+          {isLowStock && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', color: '#d97706', backgroundColor: '#fffbeb', padding: '2px 8px', borderRadius: '4px', border: '1px solid #fde047', fontWeight: 700, width: 'fit-content', marginTop: '4px' }}>
+              Only {product.stock} units left!
+            </div>
+          )}
 
           <p style={{ fontSize: '0.9rem', color: isDark ? '#cbd5e1' : 'var(--muted)', lineHeight: '1.5', margin: 0, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
             {product.description}
@@ -138,6 +150,7 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, inWishlist, layou
           <button 
             type="button" 
             onClick={handleAddToCart}
+            disabled={isOutOfStock}
             style={{
               width: '100%',
               padding: '10px 16px',
@@ -145,18 +158,20 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, inWishlist, layou
               fontWeight: 700,
               borderRadius: 'var(--radius-sm)',
               border: 'none',
-              backgroundColor: added ? '#10b981' : 'var(--accent)',
-              color: '#ffffff',
-              cursor: 'pointer',
+              backgroundColor: isOutOfStock ? '#cbd5e1' : (added ? '#10b981' : 'var(--accent)'),
+              color: isOutOfStock ? '#64748b' : '#ffffff',
+              cursor: isOutOfStock ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '8px',
               transition: 'all 0.2s ease',
-              boxShadow: added ? '0 4px 10px rgba(16, 185, 129, 0.2)' : 'none'
+              boxShadow: (added && !isOutOfStock) ? '0 4px 10px rgba(16, 185, 129, 0.2)' : 'none'
             }}
           >
-            {added ? (
+            {isOutOfStock ? (
+              'Out of Stock'
+            ) : added ? (
               <>
                 <FiCheck style={{ fontSize: '1rem' }} /> Added!
               </>
@@ -243,6 +258,16 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, inWishlist, layou
           </Link>
         </h3>
         <p className="brand-name" style={{ fontSize: '0.8rem', color: isDark ? '#94a3b8' : 'var(--muted)', marginBottom: '8px' }}>{product.brand}</p>
+        {isOutOfStock && (
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', color: '#dc2626', backgroundColor: '#fef2f2', padding: '2px 8px', borderRadius: '4px', border: '1px solid #fca5a5', fontWeight: 700, width: 'fit-content', marginBottom: '8px' }}>
+            Out of Stock
+          </div>
+        )}
+        {isLowStock && (
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', color: '#d97706', backgroundColor: '#fffbeb', padding: '2px 8px', borderRadius: '4px', border: '1px solid #fde047', fontWeight: 700, width: 'fit-content', marginBottom: '8px' }}>
+            Only {product.stock} units left!
+          </div>
+        )}
         
         {/* Delivery Tag */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: isDark ? '#34d399' : '#166534', backgroundColor: isDark ? 'rgba(52,211,153,0.08)' : '#f0fdf4', padding: '6px 10px', borderRadius: 'var(--radius-sm)', marginBottom: '8px', border: isDark ? '1px solid rgba(52,211,153,0.15)' : '1px solid #bbf7d0', fontWeight: 600 }}>
@@ -269,6 +294,7 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, inWishlist, layou
             <button 
               type="button" 
               onClick={handleAddToCart}
+              disabled={isOutOfStock}
               style={{
                 width: '100%',
                 padding: '10px 16px',
@@ -276,18 +302,20 @@ const ProductCard = ({ product, onAddToCart, onToggleWishlist, inWishlist, layou
                 fontWeight: 700,
                 borderRadius: 'var(--radius-sm)',
                 border: 'none',
-                backgroundColor: added ? '#10b981' : 'var(--accent)',
-                color: '#ffffff',
-                cursor: 'pointer',
+                backgroundColor: isOutOfStock ? '#cbd5e1' : (added ? '#10b981' : 'var(--accent)'),
+                color: isOutOfStock ? '#64748b' : '#ffffff',
+                cursor: isOutOfStock ? 'not-allowed' : 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
                 transition: 'all 0.2s ease',
-                boxShadow: added ? '0 4px 10px rgba(16, 185, 129, 0.2)' : 'none'
+                boxShadow: (added && !isOutOfStock) ? '0 4px 10px rgba(16, 185, 129, 0.2)' : 'none'
               }}
             >
-              {added ? (
+              {isOutOfStock ? (
+                'Out of Stock'
+              ) : added ? (
                 <>
                   <FiCheck style={{ fontSize: '1rem' }} /> Added!
                 </>

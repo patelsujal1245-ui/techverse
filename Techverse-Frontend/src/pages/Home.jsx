@@ -42,9 +42,9 @@ const Home = () => {
         color: 'var(--text)'
       }}
     >
-      <main style={{ width: '100%', maxWidth: '100%', margin: '0', padding: '40px 6%' }}>
-        <Hero products={products} />
+      <main style={{ width: '100%', maxWidth: '100%', margin: '0', padding: '0' }}>
         <VideoAdSection />
+        <Hero products={products} />
         <CategorySection categories={categories} theme="light" />
         <FeaturedProducts
           products={products}

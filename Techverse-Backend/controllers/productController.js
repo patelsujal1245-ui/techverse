@@ -1,4 +1,5 @@
 import Product from '../models/Product.js'
+import StockLog from '../models/StockLog.js'
 
 export const getProducts = async (req, res) => {
   const keyword = req.query.keyword
@@ -33,12 +34,26 @@ export const createProduct = async (req, res) => {
     description,
     price,
     oldPrice,
-    stock,
+    stock: stock || 0,
     images,
     specifications,
   })
 
   const createdProduct = await product.save()
+
+  // Log initial stock creation if stock > 0
+  if (createdProduct.stock > 0) {
+    await StockLog.create({
+      product: createdProduct._id,
+      productName: createdProduct.name,
+      changeType: 'Admin Adjustment',
+      quantityChanged: createdProduct.stock,
+      oldStock: 0,
+      newStock: createdProduct.stock,
+      details: 'Initial Product Creation'
+    })
+  }
+
   res.status(201).json(createdProduct)
 }
 
@@ -46,8 +61,24 @@ export const updateProduct = async (req, res) => {
   const product = await Product.findById(req.params.id)
 
   if (product) {
+    const oldStock = product.stock || 0
+    const newStock = req.body.stock !== undefined ? Number(req.body.stock) : oldStock
+
     Object.assign(product, req.body)
     const updatedProduct = await product.save()
+
+    if (req.body.stock !== undefined && newStock !== oldStock) {
+      await StockLog.create({
+        product: product._id,
+        productName: product.name,
+        changeType: 'Admin Adjustment',
+        quantityChanged: newStock - oldStock,
+        oldStock,
+        newStock,
+        details: 'Updated by Admin'
+      })
+    }
+
     res.json(updatedProduct)
   } else {
     res.status(404).json({ message: 'Product not found' })
